@@ -13,7 +13,7 @@ mongoose.connect(process.env.MONGO_URI, {
 }).catch(err => console.log('MongoDB Connection Error:', err));
 
 app.get('/', (req, res) => {
-    res.send('Healthcare Education API Running...');
+    res.send('MindShire API Running...');
 });
 
 const PORT = process.env.PORT || 5000;
