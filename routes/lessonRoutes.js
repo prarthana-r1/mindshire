@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Lesson = require('../models/Lesson');
+const Lesson = require('../models/Lessons');
 
 // Get Lessons by Grade
 router.get('/:grade', async (req, res) => {
