@@ -45,7 +45,7 @@
 
 1. **Clone the repository:**
     ```bash
-    git clone https://github.com/your-username/HealthcareEd-Platform.git
+    git clone https://github.com/your-username/MindShire.git
     cd MindShire
     ```
 
