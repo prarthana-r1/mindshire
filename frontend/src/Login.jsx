@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PIC5 from './assets/PIC5.png';
-import API_URL from "../apiConfig";
+import API_URL from "./apiConfig";
 
 
 const AuthPage = () => {
