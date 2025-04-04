@@ -1,47 +1,66 @@
 import React, { useState } from 'react';
-import {useNavigate} from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom';
+import PIC5 from './assets/PIC5.png';
 
-const LoginSignupPage = () => {
-  const navigate=useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [role, setRole] = useState("");
-  const [grade, setGrade] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [activeTab, setActiveTab] = useState("login");
+const AuthPage = () => {
+  const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('login');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    name: '',
+    role: '',
+    grade: '',
+  });
+
+  // Handle form input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: value
+    }));
+  };
 
   // Reset form fields when switching tabs
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setEmail("");
-    setPassword("");
-    setName("");
-    setRole("");
-    setGrade("");
-    setConfirmPassword("");
+    setFormData({
+      email: '',
+      password: '',
+      confirmPassword: '',
+      name: '',
+      role: '',
+      grade: '',
+    });
     setErrorMessage("");
   };
 
+  // Validate login form
   const validateLoginForm = () => {
     // Reset previous error
     setErrorMessage("");
     
-    if (!email.trim()) {
+    if (!formData.email.trim()) {
       setErrorMessage("Email is required.");
       return false;
     }
     
     // Simple email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(formData.email)) {
       setErrorMessage("Please enter a valid email address.");
       return false;
     }
     
-    if (!password) {
+    if (!formData.password) {
       setErrorMessage("Password is required.");
       return false;
     }
@@ -49,6 +68,7 @@ const LoginSignupPage = () => {
     return true;
   };
 
+  // Handle login submission
   const handleLogin = async (e) => {
     e.preventDefault();
     
@@ -66,8 +86,8 @@ const LoginSignupPage = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: email.trim(),
-          password,
+          email: formData.email.trim(),
+          password: formData.password,
         }),
       });
       
@@ -80,11 +100,17 @@ const LoginSignupPage = () => {
         // Store the token in localStorage
         if (data.token) {
           localStorage.setItem('token', data.token);
+          
+          // Store user email in localStorage if remember me is checked
+          if (rememberMe) {
+            localStorage.setItem('userEmail', formData.email);
+          } else {
+            localStorage.removeItem('userEmail');
+          }
         }
         
-        // Redirect to dashboard or home page
-        alert("Login successful!");
-        navigate("/dashboard") // Uncomment to redirect
+        // Redirect to dashboard
+        navigate("/dashboard");
       } else {
         // Display error from server
         setErrorMessage(data.message || "Invalid email or password.");
@@ -97,54 +123,55 @@ const LoginSignupPage = () => {
     }
   };
 
+  // Validate signup form
   const validateSignupForm = () => {
     // Reset previous error
     setErrorMessage("");
     
     // Check for empty fields
-    if (!name.trim()) {
+    if (!formData.name.trim()) {
       setErrorMessage("Name is required.");
       return false;
     }
     
-    if (!email.trim()) {
+    if (!formData.email.trim()) {
       setErrorMessage("Email is required.");
       return false;
     }
     
     // Simple email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(formData.email)) {
       setErrorMessage("Please enter a valid email address.");
       return false;
     }
     
-    if (!role.trim()) {
+    if (!formData.role?.trim()) {
       setErrorMessage("Role is required.");
       return false;
     }
     
-    if (!grade) {
+    if (!formData.grade) {
       setErrorMessage("Grade is required.");
       return false;
     }
     
-    if (isNaN(parseInt(grade))) {
+    if (isNaN(parseInt(formData.grade))) {
       setErrorMessage("Grade must be a valid number.");
       return false;
     }
     
-    if (!password) {
+    if (!formData.password) {
       setErrorMessage("Password is required.");
       return false;
     }
     
-    if (password.length < 6) {
+    if (formData.password.length < 6) {
       setErrorMessage("Password must be at least 6 characters long.");
       return false;
     }
     
-    if (password !== confirmPassword) {
+    if (formData.password !== formData.confirmPassword) {
       setErrorMessage("Passwords do not match.");
       return false;
     }
@@ -152,6 +179,7 @@ const LoginSignupPage = () => {
     return true;
   };
 
+  // Handle signup submission
   const handleSignup = async (e) => {
     e.preventDefault();
   
@@ -169,11 +197,11 @@ const LoginSignupPage = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: name.trim(),
-          email: email.trim(),
-          password,
-          role: role.trim(),
-          grade: parseInt(grade),
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          password: formData.password,
+          role: formData.role.trim(),
+          grade: parseInt(formData.grade),
         }),
       });
   
@@ -181,12 +209,14 @@ const LoginSignupPage = () => {
   
       if (response.ok) {
         // Clear form and show success message
-        setName("");
-        setEmail("");
-        setRole("");
-        setGrade("");
-        setPassword("");
-        setConfirmPassword("");
+        setFormData({
+          email: '',
+          password: '',
+          confirmPassword: '',
+          name: '',
+          role: '',
+          grade: '',
+        });
         alert("Signup successful! Please log in.");
         handleTabChange("login"); // Switch to login tab after signup
       } else {
@@ -201,481 +231,331 @@ const LoginSignupPage = () => {
     }
   };
 
+  // Handle form submission based on active tab
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (activeTab === 'login') {
+      handleLogin(e);
+    } else {
+      handleSignup(e);
+    }
+  };
+
   return (
-    <div style={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      minHeight: "100vh",
-      backgroundColor: "#EBF5FF"
-    }}>
-      <div style={{
-        display: "flex",
-        width: "100%",
-        maxWidth: "30rem", 
-        overflow: "hidden",
-        backgroundColor: "#FFFFFF",
-        borderRadius: "0.5rem",
-        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
-      }}>
-        {/* Image Section */}
-        <div style={{
-          display: "none",
-          width: "50%",
-          backgroundColor: "#2563EB",
-          "@media (min-width: 768px)": {
-            display: "block"
-          }
-        }} className="image-section">
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "100%"
-          }}>
-            <img 
-              src="/api/placeholder/500/600" 
-              alt="Login illustration" 
-              style={{
-                objectFit: "cover",
-                width: "100%",
-                height: "100%"
-              }}
-            />
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
+      {/* Navigation Bar */}
+      <nav className="py-4 px-6 md:px-12 flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+            <span className="font-bold text-xl">M</span>
+          </div>
+          <span className="font-bold text-xl">MindShire</span>
+        </div>
+        
+        {/* Mobile menu button */}
+        <button 
+          className="md:hidden text-gray-400 hover:text-white focus:outline-none"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+        >
+          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {isMenuOpen ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
+        </button>
+        
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center space-x-8">
+          <Link to="/" className="text-gray-300 hover:text-white transition duration-300">Home</Link>
+          <Link to="/about" className="text-gray-300 hover:text-white transition duration-300">About</Link>
+          <a href="#" className="text-gray-300 hover:text-white transition duration-300">Pricing</a>
+          <a href="#" className="text-gray-300 hover:text-white transition duration-300">Contact</a>
+          <button 
+            className="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-md transition duration-300"
+            onClick={() => navigate("/login")}
+          >
+            Get Started
+          </button>
+        </div>
+      </nav>
+
+      {/* Mobile menu */}
+      {isMenuOpen && (
+        <div className="md:hidden px-6 py-4 bg-gray-800">
+          <div className="flex flex-col space-y-4">
+            <Link to="/" className="text-gray-300 hover:text-white transition duration-300">Home</Link>
+            <Link to="/about" className="text-gray-300 hover:text-white transition duration-300">About</Link>
+            <a href="#" className="text-gray-300 hover:text-white transition duration-300">Pricing</a>
+            <a href="#" className="text-gray-300 hover:text-white transition duration-300">Contact</a>
+            <button 
+              className="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-md transition duration-300 w-full"
+              onClick={() => navigate("/login")}
+            >
+              Get Started
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Split Content Section */}
+      <div className="flex-1 flex flex-col md:flex-row">
+        {/* Left Side - Image Section */}
+        <div className="md:w-1/2 bg-indigo-900 flex items-center justify-center p-8">
+          <div className="max-w-md">
+            <div className="relative">
+              <div className="absolute -top-10 -left-10 h-64 w-64 bg-indigo-600/30 rounded-full blur-3xl"></div>
+              <div className="absolute -bottom-10 -right-10 h-64 w-64 bg-purple-600/30 rounded-full blur-3xl"></div>
+
+              {/* Image Section */}
+              <div className="relative z-10">
+                <img 
+                  src={PIC5} 
+                  alt="EduLearn Banner" 
+                  className="w-full h-auto rounded-lg object-cover"
+                />
+              </div>
+            </div>
           </div>
         </div>
         
-        {/* Form Section */}
-        <div style={{
-          width: "100%",
-          padding: "2rem",
-          "@media (min-width: 768px)": {
-            width: "50%"
-          }
-        }} className="form-section">
-          <div style={{
-            textAlign: "center"
-          }}>
-            <h2 style={{
-              fontSize: "1.875rem",
-              fontWeight: "800",
-              color: "#2563EB"
-            }}>Welcome</h2>
-            <p style={{
-              marginTop: "0.5rem",
-              fontSize: "0.875rem",
-              color: "#4B5563"
-            }}>Please login or create an account</p>
-          </div>
+        {/* Right Side - Auth Form */}
+        <div className="md:w-1/2 flex items-center justify-center px-6 py-10">
+          <div className="w-full max-w-md">
+            {/* Card */}
+            <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 relative">
+              {/* Background effects */}
+              <div className="absolute -top-6 -left-6 h-40 w-40 bg-indigo-900/30 rounded-full blur-3xl"></div>
+              <div className="absolute -bottom-8 -right-8 h-40 w-40 bg-purple-900/30 rounded-full blur-3xl"></div>
+              
+              {/* Content */}
+              <div className="relative z-10">
+                {/* Tabs */}
+                <div className="flex mb-8 bg-gray-700 rounded-lg p-1">
+                  <button 
+                    className={`flex-1 py-2 rounded-md transition-all duration-200 ${activeTab === 'login' ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:text-white'}`}
+                    onClick={() => handleTabChange('login')}
+                    type="button"
+                  >
+                    Login
+                  </button>
+                  <button 
+                    className={`flex-1 py-2 rounded-md transition-all duration-200 ${activeTab === 'signup' ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:text-white'}`}
+                    onClick={() => handleTabChange('signup')}
+                    type="button"
+                  >
+                    Sign Up
+                  </button>
+                </div>
 
-          <div style={{ marginTop: "1.5rem" }}>
-            {/* Tabs */}
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              width: "100%",
-              border: "1px solid #D1D5DB",
-              borderRadius: "0.375rem",
-              overflow: "hidden"
-            }}>
-              <button 
-                onClick={() => handleTabChange("login")}
-                style={{
-                  padding: "0.5rem",
-                  fontSize: "0.875rem",
-                  backgroundColor: activeTab === "login" ? "#2563EB" : "#FFFFFF",
-                  color: activeTab === "login" ? "#FFFFFF" : "#4B5563",
-                  border: "none",
-                  cursor: "pointer"
-                }}
-              >
-                Login
-              </button>
-              <button 
-                onClick={() => handleTabChange("signup")}
-                style={{
-                  padding: "0.5rem",
-                  fontSize: "0.875rem",
-                  backgroundColor: activeTab === "signup" ? "#2563EB" : "#FFFFFF",
-                  color: activeTab === "signup" ? "#FFFFFF" : "#4B5563",
-                  border: "none",
-                  cursor: "pointer"
-                }}
-              >
-                Sign Up
-              </button>
-            </div>
-            
-            {/* Error Message Display */}
-            {errorMessage && (
-              <div style={{
-                marginTop: "1rem",
-                padding: "0.75rem",
-                backgroundColor: "#FEE2E2",
-                color: "#B91C1C",
-                borderRadius: "0.375rem",
-                fontSize: "0.875rem"
-              }}>
-                {errorMessage}
+                {/* Error message */}
+                {errorMessage && (
+                  <div className="mb-4 p-3 bg-red-900/50 border border-red-700 rounded-lg text-red-200 text-sm">
+                    {errorMessage}
+                  </div>
+                )}
+
+                {/* Form */}
+                <form onSubmit={handleSubmit}>
+                  {activeTab === 'signup' && (
+                    <div className="mb-4">
+                      <label htmlFor="name" className="block text-gray-300 mb-2 text-sm">Full Name</label>
+                      <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                        placeholder="John Doe"
+                        required={activeTab === 'signup'}
+                      />
+                    </div>
+                  )}
+
+                  <div className="mb-4">
+                    <label htmlFor="email" className="block text-gray-300 mb-2 text-sm">Email Address</label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                      placeholder="you@example.com"
+                      required
+                    />
+                  </div>
+
+                  {activeTab === 'signup' && (
+                    <>
+                      <div className="mb-4">
+                        <label htmlFor="role" className="block text-gray-300 mb-2 text-sm">Role</label>
+                        <input
+                          type="text"
+                          id="role"
+                          name="role"
+                          value={formData.role}
+                          onChange={handleChange}
+                          className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                          placeholder="Student/Teacher"
+                          required={activeTab === 'signup'}
+                        />
+                      </div>
+
+                      <div className="mb-4">
+                        <label htmlFor="grade" className="block text-gray-300 mb-2 text-sm">Grade</label>
+                        <input
+                          type="text"
+                          id="grade"
+                          name="grade"
+                          value={formData.grade}
+                          onChange={handleChange}
+                          className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                          placeholder="Enter grade (e.g. 10)"
+                          required={activeTab === 'signup'}
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  <div className="mb-4">
+                    <label htmlFor="password" className="block text-gray-300 mb-2 text-sm">Password</label>
+                    <input
+                      type="password"
+                      id="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                      placeholder={activeTab === 'login' ? "Enter your password" : "Create a strong password"}
+                      required
+                    />
+                  </div>
+
+                  {activeTab === 'signup' && (
+                    <div className="mb-4">
+                      <label htmlFor="confirmPassword" className="block text-gray-300 mb-2 text-sm">Confirm Password</label>
+                      <input
+                        type="password"
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                        placeholder="Confirm your password"
+                        required={activeTab === 'signup'}
+                      />
+                    </div>
+                  )}
+
+                  {activeTab === 'login' && (
+                    <div className="flex items-center justify-between mb-6 mt-5">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="remember"
+                          checked={rememberMe}
+                          onChange={() => setRememberMe(!rememberMe)}
+                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-500 rounded bg-gray-700"
+                        />
+                        <label htmlFor="remember" className="ml-2 block text-sm text-gray-300">
+                          Remember me
+                        </label>
+                      </div>
+                      <div className="text-sm">
+                        <a href="#" className="text-indigo-400 hover:text-indigo-300 transition duration-200">
+                          Forgot password?
+                        </a>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    className={`w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg mt-4 transition duration-300 font-medium ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <span>Processing...</span>
+                    ) : (
+                      <span>{activeTab === 'login' ? 'Sign In' : 'Create Account'}</span>
+                    )}
+                  </button>
+                </form>
+
+                {/* Social Login */}
+                <div className="mt-8">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-600"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-2 bg-gray-800 text-gray-400">Or continue with</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mt-5">
+                    <button
+                      type="button"
+                      className="py-2.5 px-4 border border-gray-600 rounded-lg flex justify-center items-center hover:bg-gray-700 transition duration-200"
+                    >
+                      {/* Google Icon */}
+                      <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22.56 12.25C22.56 11.47 22.49 10.72 22.36 10H12V14.26H17.92C17.66 15.63 16.88 16.79 15.72 17.54V20.34H19.28C21.36 18.42 22.56 15.6 22.56 12.25Z" fill="#4285F4"/>
+                        <path d="M12 23C14.97 23 17.46 22.02 19.28 20.34L15.72 17.54C14.75 18.19 13.48 18.59 12 18.59C9.05 18.59 6.57 16.64 5.7 13.97H2.03V16.84C3.84 20.44 7.62 23 12 23Z" fill="#34A853"/>
+                        <path d="M5.7 13.97C5.47 13.31 5.34 12.6 5.34 11.86C5.34 11.12 5.47 10.41 5.7 9.75V6.88H2.03C1.25 8.38 0.82 10.07 0.82 11.86C0.82 13.65 1.25 15.34 2.03 16.84L5.7 13.97Z" fill="#FBBC05"/>
+                        <path d="M12 5.13C13.62 5.13 15.07 5.7 16.21 6.76L19.36 3.61C17.46 1.89 14.97 0.82 12 0.82C7.62 0.82 3.84 3.38 2.03 6.98L5.7 9.85C6.57 7.18 9.05 5.13 12 5.13Z" fill="#EA4335"/>
+                      </svg>
+                      Google
+                    </button>
+                    <button
+                      type="button"
+                      className="py-2.5 px-4 border border-gray-600 rounded-lg flex justify-center items-center hover:bg-gray-700 transition duration-200"
+                    >
+                      {/* GitHub Icon */}
+                      <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                        <path fillRule="evenodd" clipRule="evenodd" d="M12 0C5.37 0 0 5.37 0 12C0 17.31 3.435 21.795 8.205 23.385C8.805 23.49 9.03 23.13 9.03 22.815C9.03 22.53 9.015 21.585 9.015 20.58C6 21.135 5.22 19.845 4.98 19.17C4.845 18.825 4.26 17.76 3.75 17.475C3.33 17.25 2.73 16.695 3.735 16.68C4.68 16.665 5.355 17.55 5.58 17.91C6.66 19.725 8.385 19.215 9.075 18.9C9.18 18.12 9.495 17.595 9.84 17.295C7.17 16.995 4.38 15.96 4.38 11.37C4.38 10.065 4.845 8.985 5.61 8.145C5.49 7.845 5.07 6.615 5.73 4.965C5.73 4.965 6.735 4.65 9.03 6.195C9.99 5.925 11.01 5.79 12.03 5.79C13.05 5.79 14.07 5.925 15.03 6.195C17.325 4.635 18.33 4.965 18.33 4.965C18.99 6.615 18.57 7.845 18.45 8.145C19.215 8.985 19.68 10.05 19.68 11.37C19.68 15.975 16.875 16.995 14.205 17.295C14.64 17.67 15.015 18.39 15.015 19.515C15.015 21.12 15 22.41 15 22.815C15 23.13 15.225 23.505 15.825 23.385C18.2072 22.5807 20.2772 21.0497 21.7437 19.0074C23.2101 16.965 23.9993 14.5143 24 12C24 5.37 18.63 0 12 0Z" />
+                      </svg>
+                      GitHub
+                    </button>
+                  </div>
+                </div>
+
+                {/* Footer text */}
+                <p className="mt-8 text-center text-sm text-gray-400">
+                  {activeTab === 'login' ? (
+                    <>
+                      Don't have an account?{' '}
+                      <button
+                        type="button"
+                        onClick={() => handleTabChange('signup')}
+                        className="text-indigo-400 hover:text-indigo-300 font-medium transition duration-200"
+                      >
+                        Sign up
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      Already have an account?{' '}
+                      <button
+                        type="button"
+                        onClick={() => handleTabChange('login')}
+                        className="text-indigo-400 hover:text-indigo-300 font-medium transition duration-200"
+                      >
+                        Sign in
+                      </button>
+                    </>
+                  )}
+                </p>
               </div>
-            )}
-            
-            {/* Login Form */}
-            {activeTab === "login" && (
-              <form onSubmit={handleLogin} style={{ marginTop: "1.5rem" }}>
-                <div style={{ marginBottom: "1rem" }}>
-                  <label htmlFor="email" style={{
-                    display: "block",
-                    fontSize: "0.875rem",
-                    fontWeight: "500",
-                    color: "#374151",
-                    marginBottom: "0.25rem"
-                  }}>
-                    Email address
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "0.5rem 0.75rem",
-                      color: "#374151",
-                      border: "1px solid #D1D5DB",
-                      borderRadius: "0.375rem",
-                      outline: "none",
-                      marginTop: "0.25rem"
-                    }}
-                    placeholder="Email"
-                  />
-                </div>
-
-                <div style={{ marginBottom: "1rem" }}>
-                  <label htmlFor="password" style={{
-                    display: "block",
-                    fontSize: "0.875rem",
-                    fontWeight: "500",
-                    color: "#374151",
-                    marginBottom: "0.25rem"
-                  }}>
-                    Password
-                  </label>
-                  <input
-                    id="password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "0.5rem 0.75rem",
-                      color: "#374151",
-                      border: "1px solid #D1D5DB",
-                      borderRadius: "0.375rem",
-                      outline: "none",
-                      marginTop: "0.25rem"
-                    }}
-                    placeholder="Password"
-                  />
-                </div>
-
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "1rem"
-                }}>
-                  <div style={{
-                    display: "flex",
-                    alignItems: "center"
-                  }}>
-                    <input
-                      id="remember-me"
-                      type="checkbox"
-                      style={{
-                        width: "1rem",
-                        height: "1rem",
-                        color: "#2563EB",
-                        border: "1px solid #D1D5DB",
-                        borderRadius: "0.25rem"
-                      }}
-                    />
-                    <label htmlFor="remember-me" style={{
-                      display: "block",
-                      marginLeft: "0.5rem",
-                      fontSize: "0.875rem",
-                      color: "#374151"
-                    }}>
-                      Remember me
-                    </label>
-                  </div>
-
-                  <div style={{ fontSize: "0.875rem" }}>
-                    <a href="#" style={{
-                      fontWeight: "500",
-                      color: "#2563EB",
-                      textDecoration: "none"
-                    }} className="forgot-password">
-                      Forgot password?
-                    </a>
-                  </div>
-                </div>
-
-                <div>
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    style={{
-                      width: "100%",
-                      padding: "0.5rem 1rem",
-                      color: "#FFFFFF",
-                      backgroundColor: isLoading ? "#93C5FD" : "#2563EB",
-                      borderRadius: "0.375rem",
-                      border: "none",
-                      cursor: isLoading ? "not-allowed" : "pointer"
-                    }} 
-                    className="sign-in-button"
-                  >
-                    {isLoading ? "Signing in..." : "Sign in"}
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* Signup Form */}
-            {activeTab === "signup" && (
-              <form onSubmit={handleSignup} style={{ marginTop: "1.5rem" }}>
-                <div style={{ marginBottom: "1rem" }}>
-                  <label htmlFor="name" style={{
-                    display: "block",
-                    fontSize: "0.875rem",
-                    fontWeight: "500",
-                    color: "#374151",
-                    marginBottom: "0.25rem"
-                  }}>
-                    Full name
-                  </label>
-                  <input
-                    id="name"
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "0.5rem 0.75rem",
-                      color: "#374151",
-                      border: "1px solid #D1D5DB",
-                      borderRadius: "0.375rem",
-                      outline: "none",
-                      marginTop: "0.25rem"
-                    }}
-                    placeholder="Full name"
-                  />
-                </div>
-
-                <div style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "1rem",
-                  marginBottom: "1rem"
-                }}>
-                  <div>
-                    <label htmlFor="role" style={{
-                      display: "block",
-                      fontSize: "0.875rem",
-                      fontWeight: "500",
-                      color: "#374151",
-                      marginBottom: "0.25rem"
-                    }}>
-                      Role
-                    </label>
-                    <input
-                      id="role"
-                      type="text"
-                      required
-                      value={role}
-                      onChange={(e) => setRole(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "0.5rem 0.75rem",
-                        color: "#374151",
-                        border: "1px solid #D1D5DB",
-                        borderRadius: "0.375rem",
-                        outline: "none",
-                        marginTop: "0.25rem"
-                      }}
-                      placeholder="Role"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="grade" style={{
-                      display: "block",
-                      fontSize: "0.875rem",
-                      fontWeight: "500",
-                      color: "#374151",
-                      marginBottom: "0.25rem"
-                    }}>
-                      Grade
-                    </label>
-                    <input
-                      id="grade"
-                      type="number"
-                      required
-                      value={grade}
-                      onChange={(e) => setGrade(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "0.5rem 0.75rem",
-                        color: "#374151",
-                        border: "1px solid #D1D5DB",
-                        borderRadius: "0.375rem",
-                        outline: "none",
-                        marginTop: "0.25rem",
-                        backgroundColor: "#FFFFFF"
-                      }}
-                      placeholder="Grade"
-                    />
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: "1rem" }}>
-                  <label htmlFor="signup-email" style={{
-                    display: "block",
-                    fontSize: "0.875rem",
-                    fontWeight: "500",
-                    color: "#374151",
-                    marginBottom: "0.25rem"
-                  }}>
-                    Email address
-                  </label>
-                  <input
-                    id="signup-email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "0.5rem 0.75rem",
-                      color: "#374151",
-                      border: "1px solid #D1D5DB",
-                      borderRadius: "0.375rem",
-                      outline: "none",
-                      marginTop: "0.25rem"
-                    }}
-                    placeholder="Email"
-                  />
-                </div>
-
-                <div style={{ marginBottom: "1rem" }}>
-                  <label htmlFor="signup-password" style={{
-                    display: "block",
-                    fontSize: "0.875rem",
-                    fontWeight: "500",
-                    color: "#374151",
-                    marginBottom: "0.25rem"
-                  }}>
-                    Password
-                  </label>
-                  <input
-                    id="signup-password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "0.5rem 0.75rem",
-                      color: "#374151",
-                      border: "1px solid #D1D5DB",
-                      borderRadius: "0.375rem",
-                      outline: "none",
-                      marginTop: "0.25rem"
-                    }}
-                    placeholder="Password"
-                  />
-                </div>
-
-                <div style={{ marginBottom: "1rem" }}>
-                  <label htmlFor="confirm-password" style={{
-                    display: "block",
-                    fontSize: "0.875rem",
-                    fontWeight: "500",
-                    color: "#374151",
-                    marginBottom: "0.25rem"
-                  }}>
-                    Confirm Password
-                  </label>
-                  <input
-                    id="confirm-password"
-                    type="password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "0.5rem 0.75rem",
-                      color: "#374151",
-                      border: "1px solid #D1D5DB",
-                      borderRadius: "0.375rem",
-                      outline: "none",
-                      marginTop: "0.25rem"
-                    }}
-                    placeholder="Confirm Password"
-                  />
-                </div>
-
-                <div>
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    style={{
-                      width: "100%",
-                      padding: "0.5rem 1rem",
-                      color: "#FFFFFF",
-                      backgroundColor: isLoading ? "#93C5FD" : "#2563EB",
-                      borderRadius: "0.375rem",
-                      border: "none",
-                      cursor: isLoading ? "not-allowed" : "pointer"
-                    }}
-                    className="create-account-button"
-                  >
-                    {isLoading ? "Creating Account..." : "Create Account"}
-                  </button>
-                </div>
-              </form>
-            )}
+            </div>
           </div>
         </div>
       </div>
-      <style jsx>{`
-        .image-section {
-          display: none;
-        }
-        
-        @media (min-width: 768px) {
-          .image-section {
-            display: block;
-          }
-          
-          .form-section {
-            width: 50%;
-          }
-        }
-        
-        .sign-in-button:hover, .create-account-button:hover {
-          background-color: #1D4ED8;
-        }
-        
-        .forgot-password:hover {
-          color: #1D4ED8;
-        }
-      `}</style>
     </div>
   );
 };
 
-export default LoginSignupPage;
+export default AuthPage;
