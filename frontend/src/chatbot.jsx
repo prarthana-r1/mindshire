@@ -39,7 +39,7 @@ const ChatbotHelpPage = () => {
   
     try {
       // Send request to backend
-      const response = await fetch('http://localhost:5000/api/ChatController/chatbot', {
+      const response = await fetch(`${API_URL}/api/ChatController/chatbot`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

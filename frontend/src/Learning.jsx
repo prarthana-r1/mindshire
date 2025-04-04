@@ -168,7 +168,7 @@ const BlueCurriculumApp = () => {
       const token = localStorage.getItem('token');
       console.log("Fetching lesson for Grade:", grade, "Topic:", topic);
   
-      const response = await axios.get(`http://localhost:5000/api/lessons/${grade}`, {
+      const response = await axios.get(`${API_URL}/api/lessons/${grade}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
   
