@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useNavigate } from "react-router-dom";
+import API_URL from "./apiConfig";
 
 const ChatbotHelpPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
